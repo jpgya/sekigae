@@ -1,103 +1,149 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>条件付き席替えアプリ</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f7f7fa;
-      color: #333;
-      margin: 0;
-      padding: 2rem;
-    }
-    h1 {
-      text-align: center;
-      color: #444;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    textarea, input[type='number'], input[type='text'], select {
-      width: 100%;
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-    }
-    td {
-      border: 1px solid #ccc;
-      text-align: center;
-      padding: 1rem;
-      font-weight: bold;
-      font-size: 1.1rem;
-      border-radius: 4px;
-    }
-    .fixed { background-color: #ffe066; }
-    .empty { background-color: #dee2e6; color: #999; }
-    .controls {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    button {
-      background: #4a90e2;
-      color: white;
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    button:hover {
-      background: #357ab8;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>条件付き席替えアプリ（エレベーティブUI）</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f7f7fa;
+    margin: 0; padding: 2rem;
+    color: #333;
+  }
+  .container {
+    max-width: 1100px;
+    margin: auto;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgb(0 0 0 / 0.1);
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  #students {
+    margin-bottom: 1rem;
+  }
+  .student-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .student-name {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  .settings-btn {
+    margin-left: 8px;
+    border: none;
+    background: #4a90e2;
+    color: white;
+    font-size: 18px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+  .settings-btn:hover {
+    background: #357ab8;
+  }
+  .settings-panel {
+    margin-left: 12px;
+    background: #eef5ff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-width: 220px;
+    font-size: 0.9rem;
+  }
+  .settings-panel label {
+    display: block;
+    margin: 6px 0;
+  }
+  .settings-panel input[type="text"],
+  .settings-panel select {
+    width: 100%;
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  .controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .controls > div {
+    flex: 1;
+    min-width: 120px;
+  }
+  button.generate-btn {
+    background: #4a90e2;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    max-width: 300px;
+    margin: auto;
+    display: block;
+  }
+  button.generate-btn:hover {
+    background: #357ab8;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+    table-layout: fixed;
+  }
+  td {
+    border: 1px solid #ccc;
+    text-align: center;
+    padding: 1rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border-radius: 6px;
+    word-break: break-word;
+  }
+  td.fixed {
+    background-color: #ffe066;
+  }
+  td.empty {
+    background-color: #dee2e6;
+    color: #999;
+  }
+</style>
 </head>
 <body>
 <div class="container">
-  <h1>条件付き席替えアプリ</h1>
-  <label>生徒と条件（1行1名、例: A:固定(0,0),避けたい=B,性別=M）</label>
-  <textarea id="studentInput" rows="8">A:固定(0,0),避けたい=B,性別=M
-B:避けたい=A,右がいい,性別=M
-C:近づけたい=D,性別=F,前がいい
-D:近づけたい=C,性別=F
-E:前空けたい,後がいい,性別=M
-F:左がいい,性別=F
-G:性別=M
-H:性別=F</textarea>
+  <h1>条件付き席替えアプリ（エレベーティブUI）</h1>
+
+  <div id="students"></div>
+  <button onclick="addStudent()">＋ 生徒追加</button>
 
   <div class="controls">
-    <div style="flex:1">
-      <label>行数</label>
-      <input type="number" id="rows" value="3" min="1">
+    <div>
+      <label for="rows">行数</label>
+      <input type="number" id="rows" value="3" min="1" />
     </div>
-    <div style="flex:1">
-      <label>列数</label>
-      <input type="number" id="cols" value="4" min="1">
+    <div>
+      <label for="cols">列数</label>
+      <input type="number" id="cols" value="4" min="1" />
     </div>
-    <div style="flex:2">
-      <label>空席にしたい座標 (例: 0,3 2,0)</label>
-      <input type="text" id="emptySeats" placeholder="カンマ区切りで座標指定">
+    <div style="flex:2;">
+      <label for="emptySeats">空席にしたい座標 (例: 0,3 2,0)</label>
+      <input type="text" id="emptySeats" placeholder="カンマ区切りで座標指定" />
     </div>
-    <div style="flex:1">
-      <label>並び順</label>
+    <div>
+      <label for="orderType">並び順</label>
       <select id="orderType">
         <option value="normal">左→右→下</option>
         <option value="zigzag">ジグザグ</option>
@@ -105,44 +151,106 @@ H:性別=F</textarea>
     </div>
   </div>
 
-  <button onclick="generate()">席替えする</button>
+  <button class="generate-btn" onclick="generate()">席替えする</button>
+
   <div id="result"></div>
 </div>
 
 <script>
-function parseStudents(text) {
-  const lines = text.trim().split('\\n');
-  return lines.map(line => {
-    const [name, ...rules] = line.split(':');
-    const obj = { name: name.trim() };
-    if (rules.length === 0) return obj;
-    rules.join(':').split(',').forEach(rule => {
-      rule = rule.trim();
-      if (rule.startsWith('固定')) {
-        const coords = rule.match(/\\((\\d+),(\\d+)\\)/);
-        if (coords) obj.fixed = [parseInt(coords[1]), parseInt(coords[2])];
-      } else if (rule.startsWith('避けたい=')) {
-        obj.avoid = rule.split('=')[1].split(';');
-      } else if (rule.startsWith('近づけたい=')) {
-        obj.prefer = rule.split('=')[1].split(';');
-      } else if (rule === '前空けたい') {
-        obj.noFront = true;
-      } else if (rule === '前がいい') {
-        obj.preferFront = true;
-      } else if (rule === '後がいい') {
-        obj.preferBack = true;
-      } else if (rule === '左がいい') {
-        obj.preferLeft = true;
-      } else if (rule === '右がいい') {
-        obj.preferRight = true;
-      } else if (rule.startsWith('性別=')) {
-        obj.gender = rule.split('=')[1];
-      }
+const studentsData = [];
+
+function addStudent(name = '', conditions = {}) {
+  const id = studentsData.length;
+  studentsData.push({ name, ...conditions });
+
+  const container = document.getElementById('students');
+
+  const row = document.createElement('div');
+  row.className = 'student-row';
+  row.dataset.index = id;
+
+  // 名前入力
+  const inputName = document.createElement('input');
+  inputName.type = 'text';
+  inputName.className = 'student-name';
+  inputName.value = name;
+  inputName.placeholder = '名前';
+  inputName.oninput = () => {
+    studentsData[id].name = inputName.value.trim();
+  };
+
+  // 設定ボタン
+  const btn = document.createElement('button');
+  btn.className = 'settings-btn';
+  btn.innerText = '⚙️';
+  btn.onclick = () => {
+    const panel = row.querySelector('.settings-panel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  };
+
+  // 設定パネル
+  const panel = document.createElement('div');
+  panel.className = 'settings-panel';
+  panel.style.display = 'none';
+  panel.innerHTML = `
+    <label><input type="checkbox" id="fixed_${id}"> 固定席</label>
+    <input type="text" id="fixedPos_${id}" placeholder="固定席座標 (例 0,0)" style="margin-bottom: 6px;"/>
+    <label><input type="checkbox" id="noFront_${id}"> 前空けたい</label>
+    <label><input type="checkbox" id="preferFront_${id}"> 前がいい</label>
+    <label><input type="checkbox" id="preferBack_${id}"> 後がいい</label>
+    <label><input type="checkbox" id="preferLeft_${id}"> 左がいい</label>
+    <label><input type="checkbox" id="preferRight_${id}"> 右がいい</label>
+    <label><input type="checkbox" id="genderM_${id}"> 男性</label>
+    <label><input type="checkbox" id="genderF_${id}"> 女性</label>
+    <label>避けたい（カンマ区切り）<br/><input type="text" id="avoid_${id}" placeholder="名前1,名前2" /></label>
+    <label>近づけたい（カンマ区切り）<br/><input type="text" id="prefer_${id}" placeholder="名前1,名前2" /></label>
+  `;
+
+  row.appendChild(inputName);
+  row.appendChild(btn);
+  row.appendChild(panel);
+  container.appendChild(row);
+
+  // イベント登録
+  function update() {
+    const s = studentsData[id];
+    s.fixed = document.getElementById(`fixed_${id}`).checked;
+    const posText = document.getElementById(`fixedPos_${id}`).value.trim();
+    if (posText.match(/^\\d+,\\d+$/)) {
+      const parts = posText.split(',');
+      s.fixed = [parseInt(parts[0]), parseInt(parts[1])];
+    } else if (!document.getElementById(`fixed_${id}`).checked) {
+      s.fixed = undefined;
+    }
+    s.noFront = document.getElementById(`noFront_${id}`).checked;
+    s.preferFront = document.getElementById(`preferFront_${id}`).checked;
+    s.preferBack = document.getElementById(`preferBack_${id}`).checked;
+    s.preferLeft = document.getElementById(`preferLeft_${id}`).checked;
+    s.preferRight = document.getElementById(`preferRight_${id}`).checked;
+    const male = document.getElementById(`genderM_${id}`).checked;
+    const female = document.getElementById(`genderF_${id}`).checked;
+    if(male && female) s.gender = undefined;
+    else if(male) s.gender = 'M';
+    else if(female) s.gender = 'F';
+    else s.gender = undefined;
+    const avoidStr = document.getElementById(`avoid_${id}`).value.trim();
+    s.avoid = avoidStr ? avoidStr.split(',').map(x => x.trim()) : undefined;
+    const preferStr = document.getElementById(`prefer_${id}`).value.trim();
+    s.prefer = preferStr ? preferStr.split(',').map(x => x.trim()) : undefined;
+  }
+
+  ['fixed_'+id, 'fixedPos_'+id, 'noFront_'+id, 'preferFront_'+id, 'preferBack_'+id,
+   'preferLeft_'+id, 'preferRight_'+id, 'genderM_'+id, 'genderF_'+id, 'avoid_'+id, 'prefer_'+id]
+    .forEach(idStr => {
+      document.getElementById(idStr).addEventListener('change', update);
+      document.getElementById(idStr).addEventListener('input', update);
     });
-    return obj;
-  });
 }
 
+// 最初はサンプル4名追加
+['A','B','C','D'].forEach(name => addStudent(name));
+
+// 席替えロジック（ほぼ前回の完全版を利用）
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -157,38 +265,46 @@ function isNear(p1, p2) {
 function generate() {
   const rows = parseInt(document.getElementById('rows').value);
   const cols = parseInt(document.getElementById('cols').value);
-  const students = parseStudents(document.getElementById('studentInput').value);
   const orderType = document.getElementById('orderType').value;
   const reservedSeats = document.getElementById('emptySeats').value
     .split(/[\\s,]+/)
     .filter(x => x.includes(','))
     .map(x => x.split(',').map(Number));
 
+  // 入力が空や名前なしのは除外
+  const students = studentsData.filter(s => s.name && s.name.trim() !== '');
+
   let grid = Array.from({length: rows}, () => Array(cols).fill(null));
   let placed = {};
 
   // 固定席
   for (const s of students) {
-    if (s.fixed) {
+    if (Array.isArray(s.fixed)) {
       const [r,c] = s.fixed;
-      grid[r][c] = s.name;
-      placed[s.name] = [r,c];
+      if(r>=0 && r<rows && c>=0 && c<cols) {
+        grid[r][c] = s.name;
+        placed[s.name] = [r,c];
+      }
     }
   }
 
   // 空席
-  reservedSeats.forEach(([r,c]) => grid[r][c] = "空席");
+  reservedSeats.forEach(([r,c]) => {
+    if(r>=0 && r<rows && c>=0 && c<cols) {
+      grid[r][c] = "空席";
+    }
+  });
 
-  const toPlace = students.filter(s => !s.fixed);
+  const toPlace = students.filter(s => !Array.isArray(s.fixed));
   shuffle(toPlace);
 
-  // 並び順
   let empty = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (!grid[r][c]) empty.push([r,c]);
     }
   }
+
   if (orderType === 'zigzag') {
     empty.sort(([r1,c1], [r2,c2]) => {
       if (r1 !== r2) return r1 - r2;
