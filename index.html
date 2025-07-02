@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>条件付き席替えアプリ</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f7fa;
+      color: #333;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    textarea, input[type='number'], input[type='text'], select {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+    td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 1rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+      border-radius: 4px;
+    }
+    .fixed { background-color: #ffe066; }
+    .empty { background-color: #dee2e6; color: #999; }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #4a90e2;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #357ab8;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>条件付き席替えアプリ</h1>
+  <label>生徒と条件（1行1名、例: A:固定(0,0),避けたい=B,性別=M）</label>
+  <textarea id="studentInput" rows="8">A:固定(0,0),避けたい=B,性別=M
+B:避けたい=A,右がいい,性別=M
+C:近づけたい=D,性別=F,前がいい
+D:近づけたい=C,性別=F
+E:前空けたい,後がいい,性別=M
+F:左がいい,性別=F
+G:性別=M
+H:性別=F</textarea>
+
+  <div class="controls">
+    <div style="flex:1">
+      <label>行数</label>
+      <input type="number" id="rows" value="3" min="1">
+    </div>
+    <div style="flex:1">
+      <label>列数</label>
+      <input type="number" id="cols" value="4" min="1">
+    </div>
+    <div style="flex:2">
+      <label>空席にしたい座標 (例: 0,3 2,0)</label>
+      <input type="text" id="emptySeats" placeholder="カンマ区切りで座標指定">
+    </div>
+    <div style="flex:1">
+      <label>並び順</label>
+      <select id="orderType">
+        <option value="normal">左→右→下</option>
+        <option value="zigzag">ジグザグ</option>
+      </select>
+    </div>
+  </div>
+
+  <button onclick="generate()">席替えする</button>
+  <div id="result"></div>
+</div>
+
+<script>
+function parseStudents(text) {
+  const lines = text.trim().split('\\n');
+  return lines.map(line => {
+    const [name, ...rules] = line.split(':');
+    const obj = { name: name.trim() };
+    if (rules.length === 0) return obj;
+    rules.join(':').split(',').forEach(rule => {
+      rule = rule.trim();
+      if (rule.startsWith('固定')) {
+        const coords = rule.match(/\\((\\d+),(\\d+)\\)/);
+        if (coords) obj.fixed = [parseInt(coords[1]), parseInt(coords[2])];
+      } else if (rule.startsWith('避けたい=')) {
+        obj.avoid = rule.split('=')[1].split(';');
+      } else if (rule.startsWith('近づけたい=')) {
+        obj.prefer = rule.split('=')[1].split(';');
+      } else if (rule === '前空けたい') {
+        obj.noFront = true;
+      } else if (rule === '前がいい') {
+        obj.preferFront = true;
+      } else if (rule === '後がいい') {
+        obj.preferBack = true;
+      } else if (rule === '左がいい') {
+        obj.preferLeft = true;
+      } else if (rule === '右がいい') {
+        obj.preferRight = true;
+      } else if (rule.startsWith('性別=')) {
+        obj.gender = rule.split('=')[1];
+      }
+    });
+    return obj;
+  });
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function isNear(p1, p2) {
+  return Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]) === 1;
+}
+
+function generate() {
+  const rows = parseInt(document.getElementById('rows').value);
+  const cols = parseInt(document.getElementById('cols').value);
+  const students = parseStudents(document.getElementById('studentInput').value);
+  const orderType = document.getElementById('orderType').value;
+  const reservedSeats = document.getElementById('emptySeats').value
+    .split(/[\\s,]+/)
+    .filter(x => x.includes(','))
+    .map(x => x.split(',').map(Number));
+
+  let grid = Array.from({length: rows}, () => Array(cols).fill(null));
+  let placed = {};
+
+  // 固定席
+  for (const s of students) {
+    if (s.fixed) {
+      const [r,c] = s.fixed;
+      grid[r][c] = s.name;
+      placed[s.name] = [r,c];
+    }
+  }
+
+  // 空席
+  reservedSeats.forEach(([r,c]) => grid[r][c] = "空席");
+
+  const toPlace = students.filter(s => !s.fixed);
+  shuffle(toPlace);
+
+  // 並び順
+  let empty = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (!grid[r][c]) empty.push([r,c]);
+    }
+  }
+  if (orderType === 'zigzag') {
+    empty.sort(([r1,c1], [r2,c2]) => {
+      if (r1 !== r2) return r1 - r2;
+      return r1 % 2 === 0 ? c1 - c2 : c2 - c1;
+    });
+  }
+
+  for (const s of toPlace) {
+    let candidates = empty.slice();
+    candidates.sort((a,b) => {
+      const score = ([r,c]) => {
+        let pts = 0;
+        for (const [name, pos] of Object.entries(placed)) {
+          if (s.avoid?.includes(name) && isNear([r,c], pos)) pts -= 100;
+          if (s.prefer?.includes(name) && isNear([r,c], pos)) pts += 10;
+        }
+        if (s.noFront && r > 0 && grid[r-1][c] && grid[r-1][c] !== "空席") pts -= 1000;
+        if (s.gender === "F" && r > 1) pts -= 10;
+        if (s.gender === "M" && r < 1) pts -= 10;
+        if (s.preferFront) pts += (rows - r);
+        if (s.preferBack)  pts += r;
+        if (s.preferLeft)  pts += (cols - c);
+        if (s.preferRight) pts += c;
+        return pts;
+      };
+      return score(b) - score(a);
+    });
+    if (candidates.length === 0) {
+      alert("条件に合う席がありません: " + s.name);
+      return;
+    }
+    const seat = candidates[0];
+    grid[seat[0]][seat[1]] = s.name;
+    placed[s.name] = seat;
+    empty = empty.filter(([r,c]) => !(r===seat[0] && c===seat[1]));
+  }
+
+  let html = "<table>";
+  for (let r = 0; r < rows; r++) {
+    html += "<tr>";
+    for (let c = 0; c < cols; c++) {
+      const val = grid[r][c];
+      const s = students.find(stu => stu.name === val);
+      let cls = "";
+      if (val === "空席") cls = "empty";
+      else if (s?.fixed) cls = "fixed";
+      html += "<td class='" + cls + "'>" + (val || "") + "</td>";
+    }
+    html += "</tr>";
+  }
+  html += "</table>";
+  document.getElementById("result").innerHTML = html;
+}
+</script>
+</body>
+</html>
