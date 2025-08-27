@@ -4,34 +4,56 @@
 <meta charset="UTF-8" />
 <title>条件付き席替えアプリ - 完全版</title>
 <style>
-body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin:0; padding:2rem; color:#333;}
-.container { max-width: 1200px; margin:auto; background:#fff; padding:2rem; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
-h1 { text-align:center; margin-bottom:1rem;}
-#students { margin-bottom:1rem;}
-.student-row { display:flex; align-items:center; margin-bottom:6px;}
-.student-name { flex:1; padding:6px 10px; font-size:1rem; border:1px solid #ccc; border-radius:6px;}
-.settings-btn { margin-left:8px; border:none; background:#4a90e2; color:white; font-size:18px; padding:5px 12px; border-radius:6px; cursor:pointer; transition:0.2s;}
-.settings-btn:hover { background:#357ab8;}
-.settings-panel { display:none; margin-left:12px; background:#eef5ff; border-radius:8px; padding:8px 12px; min-width:220px; font-size:0.9rem;}
-.settings-panel label { display:block; margin:6px 0;}
-.settings-panel input[type="text"], .settings-panel select { width:100%; padding:4px 6px; border-radius:4px; border:1px solid #ccc;}
-.controls { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;}
-.controls > div { flex:1; min-width:120px;}
-button.generate-btn { background:#4a90e2; color:white; padding:10px 18px; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer; width:100%; max-width:300px; margin:auto; display:block;}
-button.generate-btn:hover { background:#357ab8;}
-table { width:100%; border-collapse:collapse; margin-top:2rem; table-layout:fixed; }
-td { border:1px solid #ccc; text-align:center; padding:1rem; font-weight:bold; font-size:1.1rem; border-radius:6px; word-break:break-word; cursor:pointer; transition:0.2s;}
-td.fixed { background-color:#ffe066;}
-td.empty { background-color:#dee2e6; color:#999;}
-td:hover { background:#f0f0ff;}
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center;}
-.modal-content { background:#fff; padding:2rem; border-radius:12px; max-width:400px; width:90%; position:relative;}
-.close { position:absolute; top:10px; right:10px; cursor:pointer; font-size:1.2rem; color:#888;}
+/* 全体 */
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin:0; padding:2rem; color:#333; }
+.container { max-width: 1200px; margin:auto; background:#fff; padding:2rem; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,0.15); }
+h1 { text-align:center; margin-bottom:1.5rem; font-size:2rem; color:#4a90e2; }
+
+/* 学生追加 */
+#students { margin-bottom:1rem; }
+.student-row { display:flex; align-items:center; margin-bottom:8px; }
+.student-name { flex:1; padding:8px 12px; font-size:1rem; border:1px solid #ccc; border-radius:8px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.1); transition:0.2s; }
+.student-name:focus { outline:none; border-color:#4a90e2; box-shadow:0 0 6px rgba(74,144,226,0.5); }
+.settings-btn { margin-left:8px; border:none; background:#4a90e2; color:white; font-size:18px; padding:6px 14px; border-radius:8px; cursor:pointer; transition:0.2s; }
+.settings-btn:hover { background:#357ab8; transform:translateY(-2px); }
+
+/* コントロール */
+.controls { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+.controls > div { flex:1; min-width:140px; }
+.controls input, .controls select { width:100%; padding:6px 8px; border-radius:6px; border:1px solid #ccc; }
+
+/* 席替えボタン */
+button.generate-btn { background:#4a90e2; color:white; padding:12px 20px; border:none; border-radius:10px; font-size:1.2rem; cursor:pointer; width:100%; max-width:300px; margin:auto; display:block; transition:0.2s; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+button.generate-btn:hover { background:#357ab8; transform:translateY(-2px); }
+
+/* 席表 */
+table { width:100%; border-collapse:collapse; margin-top:2rem; table-layout:fixed; box-shadow:0 4px 12px rgba(0,0,0,0.05); border-radius:12px; overflow:hidden; }
+td { border:1px solid #ccc; text-align:center; padding:1rem; font-weight:bold; font-size:1.1rem; border-radius:6px; word-break:break-word; transition:0.2s; cursor:pointer; background:#fff;}
+td.fixed { background: linear-gradient(120deg, #ffe066, #ffd43b); }
+td.empty { background: linear-gradient(120deg, #dee2e6, #cfd3d6); color:#555; }
+td:hover { background:#f0f8ff; }
+
+/* モーダル */
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:10; }
+.modal-content { background:#fff; padding:2rem; border-radius:16px; max-width:450px; width:90%; position:relative; box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.close { position:absolute; top:12px; right:12px; cursor:pointer; font-size:1.4rem; color:#888; transition:0.2s; }
+.close:hover { color:#444; }
+
+/* タブ */
+.tabs { display:flex; gap:4px; margin-bottom:12px; }
+.tab-btn { flex:1; padding:8px 10px; border:none; background:#eee; cursor:pointer; border-radius:8px; font-weight:bold; transition:0.2s; }
+.tab-btn.active { background:#4a90e2; color:white; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+.tab-panel { padding:6px 0; }
+.tab-panel label { display:block; margin-bottom:6px; }
+.tab-panel input[type="text"], .tab-panel select { width:100%; padding:6px 8px; border-radius:6px; border:1px solid #ccc; }
+
+/* レスポンシブ */
+@media(max-width:600px){ .controls { flex-direction:column; } td { padding:0.6rem; font-size:1rem; } }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>条件付き席替えアプリ - 完全版</h1>
+  <h1>条件付き席替えアプリ</h1>
   <div id="students"></div>
   <button onclick="addStudent()">＋ 生徒追加</button>
 
@@ -46,34 +68,61 @@ td:hover { background:#f0f0ff;}
   <div id="result"></div>
 </div>
 
+<!-- モーダル -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
     <h2>生徒設定</h2>
-    <div id="modal-body"></div>
-    <button onclick="saveModal()">保存</button>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('basic')">基本情報</button>
+      <button class="tab-btn" onclick="showTab('position')">位置希望</button>
+      <button class="tab-btn" onclick="showTab('relation')">人間関係</button>
+    </div>
+    <div id="tab-basic" class="tab-panel">
+      <label><input type="checkbox" id="m_fixed"> 固定席</label>
+      <input type="text" id="m_pos" placeholder="固定座標 0,0"/>
+      <label>性別:
+        <select id="m_gender">
+          <option value="">未指定</option>
+          <option value="M">男</option>
+          <option value="F">女</option>
+        </select>
+      </label>
+    </div>
+    <div id="tab-position" class="tab-panel" style="display:none;">
+      <label><input type="checkbox" id="m_noFront"> 前空けたい</label>
+      <label><input type="checkbox" id="m_preferFront"> 前がいい</label>
+      <label><input type="checkbox" id="m_preferBack"> 後がいい</label>
+      <label><input type="checkbox" id="m_preferLeft"> 左がいい</label>
+      <label><input type="checkbox" id="m_preferRight"> 右がいい</label>
+    </div>
+    <div id="tab-relation" class="tab-panel" style="display:none;">
+      <label>避けたい (カンマ区切り)<input type="text" id="m_avoid"/></label>
+      <label>近づけたい (カンマ区切り)<input type="text" id="m_prefer"/></label>
+    </div>
+    <button onclick="saveModal()" style="margin-top:12px; background:#4a90e2; color:white; padding:8px 16px; border:none; border-radius:8px; cursor:pointer;">保存</button>
   </div>
 </div>
 
 <script>
+// 学生データ
 let studentsData = [];
 
-function addStudent(name='') {
-  const id = studentsData.length;
+function addStudent(name=''){
+  const id=studentsData.length;
   studentsData.push({name, fixed:false});
+  const container=document.getElementById('students');
+  const row=document.createElement('div');
+  row.className='student-row';
+  row.dataset.index=id;
 
-  const container = document.getElementById('students');
-  const row = document.createElement('div');
-  row.className = 'student-row';
-  row.dataset.index = id;
-
-  const input = document.createElement('input');
+  const input=document.createElement('input');
   input.className='student-name';
   input.value=name;
   input.placeholder='名前';
-  input.oninput = ()=>studentsData[id].name=input.value.trim();
+  input.oninput=()=>studentsData[id].name=input.value.trim();
 
-  const btn = document.createElement('button');
+  const btn=document.createElement('button');
   btn.className='settings-btn';
   btn.innerText='⚙️';
   btn.onclick=()=>openModal(id);
@@ -83,24 +132,22 @@ function addStudent(name='') {
   container.appendChild(row);
 }
 
-function openModal(id) {
-  const modal = document.getElementById('modal');
+// モーダル操作
+function openModal(id){
+  const modal=document.getElementById('modal');
   modal.style.display='flex';
-  const body = document.getElementById('modal-body');
-  const s = studentsData[id];
-  body.innerHTML=`
-    <label><input type="checkbox" id="m_fixed"> 固定席</label>
-    <input type="text" id="m_pos" placeholder="固定座標 0,0" style="margin-bottom:6px;" value="${Array.isArray(s.fixed)?s.fixed.join(','):""}"/>
-    <label><input type="checkbox" id="m_noFront" ${s.noFront?"checked":""}> 前空けたい</label>
-    <label><input type="checkbox" id="m_preferFront" ${s.preferFront?"checked":""}> 前がいい</label>
-    <label><input type="checkbox" id="m_preferBack" ${s.preferBack?"checked":""}> 後がいい</label>
-    <label><input type="checkbox" id="m_preferLeft" ${s.preferLeft?"checked":""}> 左がいい</label>
-    <label><input type="checkbox" id="m_preferRight" ${s.preferRight?"checked":""}> 右がいい</label>
-    <label>避けたい (カンマ区切り)<input type="text" id="m_avoid" value="${s.avoid? s.avoid.join(','):""}"/></label>
-    <label>近づけたい (カンマ区切り)<input type="text" id="m_prefer" value="${s.prefer? s.prefer.join(','):""}"/></label>
-    <label>性別: <select id="m_gender"><option value="">未指定</option><option value="M" ${s.gender==="M"?"selected":""}>男</option><option value="F" ${s.gender==="F"?"selected":""}>女</option></select></label>
-  `;
   modal.dataset.id=id;
+  const s=studentsData[id];
+  document.getElementById('m_fixed').checked=Array.isArray(s.fixed);
+  document.getElementById('m_pos').value=Array.isArray(s.fixed)?s.fixed.join(','):'';
+  document.getElementById('m_noFront').checked=s.noFront||false;
+  document.getElementById('m_preferFront').checked=s.preferFront||false;
+  document.getElementById('m_preferBack').checked=s.preferBack||false;
+  document.getElementById('m_preferLeft').checked=s.preferLeft||false;
+  document.getElementById('m_preferRight').checked=s.preferRight||false;
+  document.getElementById('m_avoid').value=s.avoid?s.avoid.join(','):'';
+  document.getElementById('m_prefer').value=s.prefer?s.prefer.join(','):'';
+  document.getElementById('m_gender').value=s.gender||'';
 }
 
 function closeModal(){document.getElementById('modal').style.display='none';}
@@ -120,10 +167,19 @@ function saveModal(){
   closeModal();
 }
 
+function showTab(tab){
+  ['basic','position','relation'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=(t===tab?'block':'none');
+    document.querySelector(`.tab-btn[onclick="showTab('${t}')"]`).classList.toggle('active', t===tab);
+  });
+}
+
+// 初期サンプル
+['A','B','C','D'].forEach(name=>addStudent(name));
+
+/* 席替えロジック */
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
-
 function isNear(p1,p2){return Math.abs(p1[0]-p2[0])+Math.abs(p1[1]-p2[1])===1;}
-
 function generate(){
   const rows=parseInt(document.getElementById('rows').value);
   const cols=parseInt(document.getElementById('cols').value);
@@ -133,15 +189,9 @@ function generate(){
   let grid=Array.from({length:rows},()=>Array(cols).fill(null));
   let placed={};
 
-  // 固定席
   students.forEach(s=>{
-    if(Array.isArray(s.fixed)){
-      const [r,c]=s.fixed;
-      if(r>=0&&r<rows&&c>=0&&c<cols){grid[r][c]=s.name;placed[s.name]=[r,c];}
-    }
+    if(Array.isArray(s.fixed)){const [r,c]=s.fixed;if(r>=0&&r<rows&&c>=0&&c<cols){grid[r][c]=s.name;placed[s.name]=[r,c];}}
   });
-
-  // 空席
   reserved.forEach(([r,c])=>{if(r>=0&&r<rows&&c>=0&&c<cols) grid[r][c]="空席";});
 
   const toPlace=students.filter(s=>!Array.isArray(s.fixed));
@@ -161,35 +211,28 @@ function generate(){
           if(s.prefer?.includes(name)&&isNear([r,c],pos)) pts+=10;
         }
         if(s.noFront && r>0 && grid[r-1][c] && grid[r-1][c]!=="空席") pts-=1000;
-        if(s.preferFront) pts+=rows-r; if(s.preferBack) pts+=r;
-        if(s.preferLeft) pts+=cols-c; if(s.preferRight) pts+=c;
+        if(s.gender==="F"&&r>1) pts-=10;
+        if(s.gender==="M"&&r<1) pts-=10;
+        if(s.preferFront) pts+=(rows-r);
+        if(s.preferBack) pts+=r;
+        if(s.preferLeft) pts+=(cols-c);
+        if(s.preferRight) pts+=c;
         return pts;
       };
       return score(b)-score(a);
     });
-    if(candidates.length===0){alert("席不足: "+s.name);return;}
-    const seat=candidates[0]; grid[seat[0]][seat[1]]=s.name; placed[s.name]=seat; empty=empty.filter(([r,c])=>!(r===seat[0]&&c===seat[1]));
+    if(candidates.length===0){alert("条件に合う席がありません: "+s.name);return;}
+    const seat=candidates[0];
+    grid[seat[0]][seat[1]]=s.name;
+    placed[s.name]=seat;
+    empty=empty.filter(([r,c])=>!(r===seat[0]&&c===seat[1]));
   }
 
   let html="<table>";
-  for(let r=0;r<rows;r++){
-    html+="<tr>";
-    for(let c=0;c<cols;c++){
-      const val=grid[r][c];
-      const s=students.find(stu=>stu.name===val);
-      let cls="";
-      if(val==="空席") cls="empty";
-      else if(s?.fixed) cls="fixed";
-      html+=`<td class='${cls}'>${val||""}</td>`;
-    }
-    html+="</tr>";
-  }
+  for(let r=0;r<rows;r++){html+="<tr>";for(let c=0;c<cols;c++){const val=grid[r][c];const s=students.find(stu=>stu.name===val);let cls="";if(val==="空席") cls="empty"; else if(s?.fixed) cls="fixed"; html+=`<td class='${cls}'>${val||""}</td>`;} html+="</tr>";}
   html+="</table>";
   document.getElementById('result').innerHTML=html;
 }
-
-// 初期サンプル
-['A','B','C','D'].forEach(name=>addStudent(name));
 </script>
 </body>
 </html>
